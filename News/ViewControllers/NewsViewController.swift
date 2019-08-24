@@ -15,7 +15,7 @@ class NewsViewController: UIViewController {
     var newsViewModel = NewsVewModel()
     var spinner = UIActivityIndicatorView()
     var isPagination = false
-    let searchController = UISearchController(searchResultsController: nil)
+    var searchController: UISearchController!
     var filteredNews = [Article]()
     
     private struct Constants {
@@ -31,18 +31,29 @@ class NewsViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         self.tableView.refreshControl = newsRefreshControl
+        setupSearchController()
         updateNews()
         self.createSpinner()
-        // Setup the Search Controller
+    }
+
+    private func setupSearchController() {
+
+        searchController = UISearchController(searchResultsController: nil)
         searchController.searchResultsUpdater = self
         searchController.obscuresBackgroundDuringPresentation = false
         searchController.searchBar.placeholder = "Search News"
-        self.navigationItem.searchController = searchController
         definesPresentationContext = true
+        searchController.hidesNavigationBarDuringPresentation = false
+        
+        if #available(iOS 10.0, *) {
+            self.tableView.tableHeaderView = searchController.searchBar
+        } else {
+            navigationItem.searchController = searchController
+        }
     }
     
     @objc func updateNews() {
-        
+
         newsViewModel.getNews(pagingState: .NO) { result in
             if let news = result {
                 DispatchQueue.main.async {
@@ -51,23 +62,35 @@ class NewsViewController: UIViewController {
                     self.newsRefreshControl.endRefreshing()
                 }
             } else {
-                // setup Alert
+                self.alertHandler(title: "Attention!", message: "News not received!", buttonTitle: "Ok")
             }
         }
     }
     
-    func isFiltering() -> Bool {
-        return searchController.isActive && !searchBarIsEmpty()
+    private func searchBarIsEmpty() -> Bool {
+        // Returns true if the text is empty or nil
+        return self.searchController.searchBar.text?.isEmpty ?? true
     }
     
-    // Pagination spinner
-    func createSpinner() {
+    private func isFiltering() -> Bool {
+        return searchController.isActive && !searchBarIsEmpty()
+    }
+ 
+    // define pagination spinner
+    private func createSpinner() {
         spinner = UIActivityIndicatorView(style: .whiteLarge)
         spinner.stopAnimating()
         spinner.hidesWhenStopped = true
         spinner.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.size.width, height: 60)
         spinner.color = #colorLiteral(red: 0.1294117719, green: 0.2156862766, blue: 0.06666667014, alpha: 1)
         tableView.tableFooterView = spinner
+    }
+
+    private func alertHandler(title: String, message: String, buttonTitle: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        let alertAction = UIAlertAction(title: buttonTitle, style: .cancel, handler: nil)
+        alert.addAction(alertAction)
+        present(alert, animated: true, completion: nil)
     }
     
     // Pagination cells
@@ -104,11 +127,11 @@ class NewsViewController: UIViewController {
 // MARK: - UITableViewDelegate
 
 extension NewsViewController: UITableViewDelegate {
-    
+
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 250
     }
-    
+ 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         guard let article = newsViewModel.newsStorage?.articles[indexPath.row] else { return }
         guard let url = article.url else { return }
@@ -169,12 +192,7 @@ extension NewsViewController: UISearchResultsUpdating {
     func updateSearchResults(for searchController: UISearchController) {
         self.filterContentForSearchText(searchController.searchBar.text!)
     }
-    
-    func searchBarIsEmpty() -> Bool {
-        // Returns true if the text is empty or nil
-        return searchController.searchBar.text?.isEmpty ?? true
-    }
-    
+
     func filterContentForSearchText(_ searchText: String) {
         self.filteredNews = (self.newsViewModel.newsStorage?.articles.filter({( article : Article) -> Bool in
             return (article.title?.lowercased().contains(searchText.lowercased()))!
@@ -185,4 +203,3 @@ extension NewsViewController: UISearchResultsUpdating {
         }
     }
 }
-

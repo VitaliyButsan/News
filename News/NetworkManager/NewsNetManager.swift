@@ -11,7 +11,7 @@ import Foundation
 class NewsNetManager {
     
     var newsStorage: [NewsDataWrapper] = []
-    static var pageNumber = 1
+    static var pageNumber: Int = 1
     
     private struct Constants {
         static let newsEndPoint: String = "https://newsapi.org/v2/top-headlines"
@@ -19,6 +19,7 @@ class NewsNetManager {
     
     static func getNewsData(pagingState: PaginationState, completionHandler: @escaping(NewsDataWrapper?) -> Void) {
         
+        // reset page number when pull-to-refresh
         if pagingState == .NO {
             self.pageNumber = 1
         }

@@ -10,7 +10,6 @@ import Foundation
 
 struct NewsDataWrapper: Decodable {
     var articles: [Article]
-    let status: String
 }
 
 struct Article: Decodable {

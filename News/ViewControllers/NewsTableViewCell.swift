@@ -17,13 +17,6 @@ class NewsTableViewCell: UITableViewCell {
     @IBOutlet weak var spinner: UIActivityIndicatorView!
     @IBOutlet weak var articleSourceLabel: UILabel!
     
-    override func setHighlighted(_ highlighted: Bool, animated: Bool) {
-        if highlighted == true {
-            backgroundColor = #colorLiteral(red: 0.9646418691, green: 0.9647535682, blue: 0.9645918012, alpha: 1)
-        } else {
-            backgroundColor = .white
-        }
-    }
     
     func updateCell(with articleInfo: Article, forRowIndex cellIndex: Int) {
         
@@ -37,9 +30,10 @@ class NewsTableViewCell: UITableViewCell {
             
             self.articleImageView.image = nil
             guard let imageUrl = articleInfo.urlToImage else { return }
+            guard let url = URL(string: imageUrl) else { return }
             
             DispatchQueue.global(qos: .utility).async {
-                if let imageData = try? Data(contentsOf: URL(string: imageUrl)!) {
+                if let imageData = try? Data(contentsOf: url) {
                     
                     DispatchQueue.main.async {
                         if self.tag == cellIndex {
